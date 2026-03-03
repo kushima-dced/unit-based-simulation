@@ -6,14 +6,18 @@ import { SimulationResultDisplay } from "@/components/SimulationResult";
 import { runSimulation } from "@/lib/simulation";
 import type { Product, SimulationInput, SimulationResult } from "@/types/simulation";
 
-function createDefaultProduct(priceUnitMode: "yen" | "man" = "yen"): Product {
+function createDefaultProduct(
+  priceUnitMode: "yen" | "man" = "yen",
+  index: number = 1
+): Product {
   return {
     id: `p-${Date.now()}`,
-    name: "商品1",
-    currentPrice: priceUnitMode === "man" ? 8000 : 1000,
+    name: `商品${index}`,
+    currentPrice: 10000,
     expectedGrowthRate: 3,
     targetRatio: 100,
     monthlyAmount: 10000,
+    currentUnits: 0,
   };
 }
 
@@ -23,7 +27,7 @@ const defaultInput: SimulationInput = {
   additionalInvestmentYears: [10],
   hasRegularInvestment: true,
   priceUnitMode: "yen",
-  products: [createDefaultProduct("yen")],
+  products: [createDefaultProduct("yen", 1)],
 };
 
 export default function Home() {
