@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ユニットベースプランニング",
   description: "口数定率投資のシミュレーションツール",
+  robots: "noindex, nofollow",
 };
 
 export default function RootLayout({
