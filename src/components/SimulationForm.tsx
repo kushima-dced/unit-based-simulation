@@ -102,12 +102,10 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
           </div>
           <div className="lg:col-span-3">
             <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              追加投資する年（最大4つ、比較用）
+              追加投資する年（任意・最大4つ、比較用）
             </label>
             <div className="flex flex-wrap items-center gap-2">
-              {(
-                value.additionalInvestmentYears ?? [value.targetYears ?? 10]
-              ).map((y, i) => (
+              {(value.additionalInvestmentYears ?? []).map((y, i) => (
                 <div key={i} className="flex items-center gap-1">
                   <input
                     type="number"
@@ -120,9 +118,7 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
                           ? value.targetYears ?? 10
                           : Number(e.target.value);
                       const newYears = [
-                        ...(value.additionalInvestmentYears ?? [
-                          value.targetYears ?? 10,
-                        ]),
+                        ...(value.additionalInvestmentYears ?? []),
                       ];
                       newYears[i] =
                         num !== undefined && !Number.isNaN(num) ? num : 0;
@@ -130,42 +126,26 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
                     }}
                     className="w-20 rounded-lg border border-zinc-300 px-2 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                   />
-                  {(
-                    value.additionalInvestmentYears ?? [
-                      value.targetYears ?? 10,
-                    ]
-                  ).length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newYears = (
-                          value.additionalInvestmentYears ?? [
-                            value.targetYears ?? 10,
-                          ]
-                        ).filter((_, j) => j !== i);
-                        update({
-                          additionalInvestmentYears:
-                            newYears.length > 0 ? newYears : [value.targetYears ?? 10],
-                        });
-                      }}
-                      className="rounded p-1 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
-                      aria-label="削除"
-                    >
-                      ×
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newYears = (
+                        value.additionalInvestmentYears ?? []
+                      ).filter((_, j) => j !== i);
+                      update({ additionalInvestmentYears: newYears });
+                    }}
+                    className="rounded p-1 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                    aria-label="削除"
+                  >
+                    ×
+                  </button>
                 </div>
               ))}
-              {(
-                value.additionalInvestmentYears ?? [value.targetYears ?? 10]
-              ).length < 4 && (
+              {(value.additionalInvestmentYears ?? []).length < 4 && (
                 <button
                   type="button"
                   onClick={() => {
-                    const years =
-                      value.additionalInvestmentYears ?? [
-                        value.targetYears ?? 10,
-                      ];
+                    const years = value.additionalInvestmentYears ?? [];
                     const last =
                       years[years.length - 1] ?? value.targetYears ?? 10;
                     update({
@@ -182,7 +162,7 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
               )}
             </div>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              0=開始時、1以上=その年目。複数指定で結果を比較できます
+              任意入力。0=開始時、1以上=その年目。未入力時は追加投資なし（積立のみ）で計算。複数指定で結果を比較できます
             </p>
           </div>
         </div>

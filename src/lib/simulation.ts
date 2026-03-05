@@ -90,7 +90,10 @@ function runRegularOnly(
   return state;
 }
 
-/** シミュレーションを実行（additionalInvestmentYear で追加投資年を指定） */
+/** 追加投資なしを表す特殊値（積立のみでシミュレーション） */
+export const NO_ADDITIONAL_INVESTMENT = -1;
+
+/** シミュレーションを実行（additionalInvestmentYear で追加投資年を指定。NO_ADDITIONAL_INVESTMENT の場合は追加投資なし） */
 export function runSimulation(
   input: SimulationInput,
   additionalInvestmentYear: number
@@ -99,11 +102,16 @@ export function runSimulation(
     .slice(0, MAX_PRODUCTS)
     .filter((p) => p.currentPrice > 0);
 
+  const isNoAdditionalInvestment =
+    additionalInvestmentYear === NO_ADDITIONAL_INVESTMENT;
+
   if (products.length === 0) {
-    const addInvestYear = Math.min(
-      Math.max(0, additionalInvestmentYear),
-      Math.max(1, input.targetYears)
-    );
+    const addInvestYear = isNoAdditionalInvestment
+      ? NO_ADDITIONAL_INVESTMENT
+      : Math.min(
+          Math.max(0, additionalInvestmentYear),
+          Math.max(1, input.targetYears)
+        );
     return {
       input,
       additionalInvestmentYear: addInvestYear,
@@ -126,10 +134,12 @@ export function runSimulation(
     totalRatio > 0 ? totalRatio / 100 : 1 / Math.max(1, products.length);
 
   const targetYears = Math.max(1, input.targetYears);
-  const addInvestYear = Math.min(
-    Math.max(0, additionalInvestmentYear),
-    targetYears
-  );
+  const addInvestYear = isNoAdditionalInvestment
+    ? NO_ADDITIONAL_INVESTMENT
+    : Math.min(
+        Math.max(0, additionalInvestmentYear),
+        targetYears
+      );
 
   const mode = input.priceUnitMode ?? "yen";
 
@@ -202,7 +212,9 @@ export function runSimulation(
       }
     }
 
-    const isAddInvestYear = yearIndex === addInvestYear;
+    const isAddInvestYear =
+      addInvestYear !== NO_ADDITIONAL_INVESTMENT &&
+      yearIndex === addInvestYear;
     if (isAddInvestYear && targetUnitsPerProduct.size > 0) {
       for (const p of products) {
         const state = productState.get(p.id)!;

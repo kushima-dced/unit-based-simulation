@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { SimulationForm } from "@/components/SimulationForm";
 import { SimulationResultDisplay } from "@/components/SimulationResult";
-import { runSimulation } from "@/lib/simulation";
+import {
+  runSimulation,
+  NO_ADDITIONAL_INVESTMENT,
+} from "@/lib/simulation";
 import type { Product, SimulationInput, SimulationResult } from "@/types/simulation";
 
 function createDefaultProduct(
@@ -24,7 +27,7 @@ function createDefaultProduct(
 const defaultInput: SimulationInput = {
   targetAmount: 10_000_000,
   targetYears: 10,
-  additionalInvestmentYears: [10],
+  additionalInvestmentYears: [],
   hasRegularInvestment: true,
   priceUnitMode: "yen",
   products: [createDefaultProduct("yen", 1)],
@@ -35,10 +38,11 @@ export default function Home() {
   const [results, setResults] = useState<SimulationResult[]>([]);
 
   const handleSubmit = () => {
-    const years = input.additionalInvestmentYears?.length
-      ? input.additionalInvestmentYears
-      : [input.targetYears ?? 10];
-    const res = years.map((y) => runSimulation(input, y));
+    const years = input.additionalInvestmentYears ?? [];
+    const res =
+      years.length > 0
+        ? years.map((y) => runSimulation(input, y))
+        : [runSimulation(input, NO_ADDITIONAL_INVESTMENT)];
     setResults(res);
   };
 

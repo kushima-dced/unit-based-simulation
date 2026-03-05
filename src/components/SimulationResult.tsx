@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { NO_ADDITIONAL_INVESTMENT } from "@/lib/simulation";
 import type { SimulationResult } from "@/types/simulation";
 
 interface SimulationResultProps {
@@ -43,6 +44,7 @@ function formatPriceForDisplay(
 }
 
 function getYearLabel(year: number): string {
+  if (year === NO_ADDITIONAL_INVESTMENT) return "追加投資なし";
   return year === 0 ? "開始時" : `${year}年目`;
 }
 
