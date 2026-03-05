@@ -347,7 +347,7 @@ export function SimulationResultDisplay({ results }: SimulationResultProps) {
                   type="monotone"
                   dataKey="合計_評価額"
                   name="合計 評価額"
-                  stroke="#10b981"
+                  stroke="#8b5cf6"
                   strokeWidth={2}
                   dot={false}
                 />

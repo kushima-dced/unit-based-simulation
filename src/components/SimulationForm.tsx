@@ -1,6 +1,11 @@
 "use client";
 
-import type { Product, SimulationInput } from "@/types/simulation";
+import type {
+  InvestmentInputMode,
+  Product,
+  RatioMode,
+  SimulationInput,
+} from "@/types/simulation";
 
 const MAN = 10_000;
 
@@ -50,6 +55,13 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
   };
 
   const priceUnitMode = value.priceUnitMode ?? "yen";
+  const ratioMode: RatioMode = value.ratioMode ?? "units";
+  const ratioLabel =
+    ratioMode === "asset" ? "目標資産比率" : "目標口数比率";
+  const investmentInputMode: InvestmentInputMode =
+    value.investmentInputMode ?? "perProduct";
+  const showPerProductAmount =
+    value.hasRegularInvestment && investmentInputMode === "perProduct";
   const products =
     value.products.length > 0
       ? value.products
@@ -99,6 +111,33 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
               }
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
             />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              比率モード
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="ratioMode"
+                  checked={ratioMode === "units"}
+                  onChange={() => update({ ratioMode: "units" })}
+                  className="text-emerald-600"
+                />
+                <span className="text-sm">口数比率（6-1）</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="ratioMode"
+                  checked={ratioMode === "asset"}
+                  onChange={() => update({ ratioMode: "asset" })}
+                  className="text-emerald-600"
+                />
+                <span className="text-sm">資産比率（6-2）</span>
+              </label>
+            </div>
           </div>
           <div className="lg:col-span-3">
             <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -194,6 +233,83 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
             <span className="text-sm">しない</span>
           </label>
         </div>
+
+        {value.hasRegularInvestment && (
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                金額入力方法
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="investmentInputMode"
+                    checked={investmentInputMode === "perProduct"}
+                    onChange={() =>
+                      update({ investmentInputMode: "perProduct" })
+                    }
+                    className="text-emerald-600"
+                  />
+                  <span className="text-sm">商品毎（6-1）</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="investmentInputMode"
+                    checked={investmentInputMode === "total"}
+                    onChange={() => update({ investmentInputMode: "total" })}
+                    className="text-emerald-600"
+                  />
+                  <span className="text-sm">総額（6-2）</span>
+                </label>
+              </div>
+            </div>
+
+            {investmentInputMode === "total" && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    月額（円/月）
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={value.totalMonthlyAmount ?? 0}
+                    onChange={(e) =>
+                      update({
+                        totalMonthlyAmount: Number(e.target.value),
+                      })
+                    }
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:ring-emerald-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    全商品合計の月額積立金額（目標比率で按分）
+                  </p>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    スポット（円/年）
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={value.totalSpotAmount ?? 0}
+                    onChange={(e) =>
+                      update({
+                        totalSpotAmount: Number(e.target.value),
+                      })
+                    }
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:ring-emerald-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    任意。毎年追加で投資する金額（目標比率で按分）
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -240,7 +356,7 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
         </div>
         {totalRatio !== 0 && totalRatio !== 100 && (
           <p className="mb-4 text-sm text-amber-600 dark:text-amber-400">
-            目標口数比率の合計が100%ではありません（現在: {totalRatio}%）
+            {ratioLabel}の合計が100%ではありません（現在: {totalRatio}%）
           </p>
         )}
         <div className="overflow-x-auto">
@@ -257,9 +373,9 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
                   期待成長率
                 </th>
                 <th className="px-3 py-2 text-left font-medium text-zinc-700 dark:text-zinc-300">
-                  目標口数比率
+                  {ratioLabel}
                 </th>
-                {value.hasRegularInvestment && (
+                {showPerProductAmount && (
                   <th className="px-3 py-2 text-left font-medium text-zinc-700 dark:text-zinc-300">
                     積立金額
                   </th>
@@ -338,7 +454,7 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
                       %
                     </span>
                   </td>
-                  {value.hasRegularInvestment && (
+                  {showPerProductAmount && (
                     <td className="px-3 py-2">
                       <input
                         type="number"

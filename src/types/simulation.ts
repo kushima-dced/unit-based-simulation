@@ -13,6 +13,12 @@ export interface Product {
 /** 価格表示単位: 1口1円 or 1口1万円 */
 export type PriceUnitMode = "yen" | "man";
 
+/** 比率モード: 口数比率 or 資産比率 */
+export type RatioMode = "units" | "asset";
+
+/** 積立金額の入力モード: 商品毎 or 総額 */
+export type InvestmentInputMode = "perProduct" | "total";
+
 export interface SimulationInput {
   targetAmount: number
   targetYears: number
@@ -21,6 +27,14 @@ export interface SimulationInput {
   hasRegularInvestment: boolean
   /** 価格の表示・入力単位（1口1円 or 1口1万円） */
   priceUnitMode: PriceUnitMode
+  /** 比率モード（口数比率 or 資産比率）。デフォルト "units" */
+  ratioMode?: RatioMode
+  /** 積立金額の入力モード。デフォルト "perProduct" */
+  investmentInputMode?: InvestmentInputMode
+  /** 総額モード時の月額（円/月） */
+  totalMonthlyAmount?: number
+  /** 総額モード時のスポット（円/年、任意・毎年追加投資） */
+  totalSpotAmount?: number
   products: Product[]
 }
 

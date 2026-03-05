@@ -50,6 +50,25 @@ function getInitialUnits(product: Product, priceInYen: number): number {
   return 0;
 }
 
+/** 商品ごとの年間投資額を算出（商品毎モード or 総額モードの按分） */
+function getYearlyAmountForProduct(
+  product: Product,
+  input: SimulationInput,
+  products: Product[]
+): number {
+  if (input.investmentInputMode === "total") {
+    const totalRatio = products.reduce((s, p) => s + (p.targetRatio ?? 0), 0);
+    const ratio =
+      totalRatio > 0
+        ? (product.targetRatio ?? 0) / totalRatio
+        : 1 / products.length;
+    const totalYearly =
+      (input.totalMonthlyAmount ?? 0) * 12 + (input.totalSpotAmount ?? 0);
+    return totalYearly * ratio;
+  }
+  return (product.monthlyAmount ?? 0) * 12;
+}
+
 /** 積立投資のみでシミュレーション（追加投資なし）年単位 */
 function runRegularOnly(
   products: Product[],
@@ -72,13 +91,12 @@ function runRegularOnly(
       for (const p of products) {
         const s = state.get(p.id)!;
         const priceInYen = toPricePerUnitInYen(p.currentPrice, mode);
-        // その年の終了時点の価格で購入（1年目なら1年後の価格）
         const price = getPriceAtYear(
           priceInYen,
           p.expectedGrowthRate,
           yearIndex
         );
-        const yearlyAmount = (p.monthlyAmount ?? 0) * 12;
+        const yearlyAmount = getYearlyAmountForProduct(p, input, products);
         if (price > 0 && yearlyAmount > 0) {
           s.units += yearlyAmount / price;
           s.invested += yearlyAmount;
@@ -142,6 +160,7 @@ export function runSimulation(
       );
 
   const mode = input.priceUnitMode ?? "yen";
+  const ratioMode = input.ratioMode ?? "units";
 
   // 目標達成年時点の価格
   const priceAtTarget = new Map<string, number>();
@@ -158,15 +177,21 @@ export function runSimulation(
     sumRatioPrice += r * price;
   }
 
-  // 目標口数比率を満たす口数（目標達成年時点）
-  // targetAmount = sum(targetUnits_i * price_i) かつ targetUnits_i / totalUnits = ratio_i
-  // => targetUnits_i = targetAmount * ratio_i / sum(ratio_j * price_j)
+  // 目標口数（目標達成年時点）
+  // 口数比率: targetUnits_i = targetAmount * ratio_i / sum(ratio_j * price_j)
+  // 資産比率: targetUnits_i = (targetAmount * ratio_i) / price_i
   const targetUnitsPerProduct = new Map<string, number>();
-  if (sumRatioPrice > 0) {
+  if (ratioMode === "asset") {
     for (const p of products) {
       const r = (p.targetRatio ?? 0) / ratioScale / 100 || 1 / products.length;
-      const targetUnits =
-        (input.targetAmount * r) / sumRatioPrice;
+      const price = priceAtTarget.get(p.id) ?? 0;
+      const targetUnits = price > 0 ? (input.targetAmount * r) / price : 0;
+      targetUnitsPerProduct.set(p.id, targetUnits);
+    }
+  } else if (sumRatioPrice > 0) {
+    for (const p of products) {
+      const r = (p.targetRatio ?? 0) / ratioScale / 100 || 1 / products.length;
+      const targetUnits = (input.targetAmount * r) / sumRatioPrice;
       targetUnitsPerProduct.set(p.id, targetUnits);
     }
   }
@@ -197,13 +222,12 @@ export function runSimulation(
       for (const p of products) {
         const state = productState.get(p.id)!;
         const priceInYen = toPricePerUnitInYen(p.currentPrice, mode);
-        // その年の終了時点の価格で購入（1年目なら1年後の価格）
         const price = getPriceAtYear(
           priceInYen,
           p.expectedGrowthRate,
           yearIndex
         );
-        const yearlyAmount = (p.monthlyAmount ?? 0) * 12;
+        const yearlyAmount = getYearlyAmountForProduct(p, input, products);
         if (price > 0 && yearlyAmount > 0) {
           const newUnits = yearlyAmount / price;
           state.units += newUnits;
@@ -253,7 +277,7 @@ export function runSimulation(
       const rr =
         state.invested > 0 ? ((val - state.invested) / state.invested) * 100 : 0;
       const yearlyAmount = input.hasRegularInvestment
-        ? (p.monthlyAmount ?? 0) * 12
+        ? getYearlyAmountForProduct(p, input, products)
         : 0;
       productSnapshots.push({
         productId: p.id,
@@ -288,7 +312,11 @@ export function runSimulation(
     return s + getInitialUnits(p, priceInYen) * priceInYen;
   }, 0);
   const regularTotal = input.hasRegularInvestment
-    ? products.reduce((s, p) => s + (p.monthlyAmount ?? 0) * 12 * targetYears, 0)
+    ? products.reduce(
+        (s, p) =>
+          s + getYearlyAmountForProduct(p, input, products) * targetYears,
+        0
+      )
     : 0;
   const additionalTotal = Math.max(
     0,

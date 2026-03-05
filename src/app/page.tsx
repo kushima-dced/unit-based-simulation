@@ -30,6 +30,10 @@ const defaultInput: SimulationInput = {
   additionalInvestmentYears: [],
   hasRegularInvestment: true,
   priceUnitMode: "yen",
+  ratioMode: "units",
+  investmentInputMode: "perProduct",
+  totalMonthlyAmount: 0,
+  totalSpotAmount: 0,
   products: [createDefaultProduct("yen", 1)],
 };
 
