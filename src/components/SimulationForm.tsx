@@ -251,7 +251,7 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
                     }
                     className="text-emerald-600"
                   />
-                  <span className="text-sm">商品毎（6-1）</span>
+                  <span className="text-sm">商品毎</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -261,7 +261,7 @@ export function SimulationForm({ value, onChange, onSubmit }: SimulationFormProp
                     onChange={() => update({ investmentInputMode: "total" })}
                     className="text-emerald-600"
                   />
-                  <span className="text-sm">総額（6-2）</span>
+                  <span className="text-sm">総額</span>
                 </label>
               </div>
             </div>

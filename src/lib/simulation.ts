@@ -248,6 +248,10 @@ export function runSimulation(
   const snapshots: SimulationSnapshot[] = [];
 
   for (let yearIndex = 0; yearIndex <= targetYears; yearIndex++) {
+    const regularUnitsPerProduct = new Map<string, number>();
+    const additionalUnitsPerProduct = new Map<string, number>();
+    const additionalAmountPerProduct = new Map<string, number>();
+
     if (yearIndex > 0 && input.hasRegularInvestment) {
       for (const p of products) {
         const state = productState.get(p.id)!;
@@ -262,6 +266,7 @@ export function runSimulation(
           const newUnits = yearlyAmount / price;
           state.units += newUnits;
           state.invested += yearlyAmount;
+          regularUnitsPerProduct.set(p.id, newUnits);
         }
       }
     }
@@ -286,6 +291,8 @@ export function runSimulation(
           const investAmount = additionalUnits * priceAtAdd;
           state.units += additionalUnits;
           state.invested += investAmount;
+          additionalUnitsPerProduct.set(p.id, additionalUnits);
+          additionalAmountPerProduct.set(p.id, investAmount);
         }
       }
     }
@@ -317,6 +324,9 @@ export function runSimulation(
         returnRate: rr,
         yearlyAmount: yearIndex > 0 ? yearlyAmount : undefined,
         price,
+        regularUnits: regularUnitsPerProduct.get(p.id),
+        additionalUnits: additionalUnitsPerProduct.get(p.id),
+        additionalAmount: additionalAmountPerProduct.get(p.id),
       });
       totalInvested += state.invested;
       totalUnits += state.units;
@@ -361,7 +371,7 @@ export function runSimulation(
         finalValuation: last.valuation,
         returnRate: last.returnRate,
         targetAmount: input.targetAmount,
-        targetAchieved: last.valuation >= input.targetAmount,
+        targetAchieved: last.valuation >= input.targetAmount - 0.5,
         additionalInvestment: additionalTotal,
       }
     : {

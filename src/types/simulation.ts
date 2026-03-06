@@ -48,6 +48,12 @@ export interface ProductSnapshot {
   yearlyAmount?: number
   /** その年の商品価格（1口あたり・円） */
   price?: number
+  /** その年の積立投資で購入した口数 */
+  regularUnits?: number
+  /** その年の追加投資で購入した口数 */
+  additionalUnits?: number
+  /** その年の追加投資金額（円） */
+  additionalAmount?: number
 }
 
 export interface SimulationSnapshot {
