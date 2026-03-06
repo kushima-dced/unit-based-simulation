@@ -57,6 +57,9 @@ interface ProductSnapshot {
   returnRate: number
   yearlyAmount?: number    // その年の積立金額（円）
   price?: number           // その年の商品価格（1口あたり・円）
+  regularUnits?: number    // その年の積立投資で購入した口数
+  additionalUnits?: number // その年の追加投資で購入した口数
+  additionalAmount?: number // その年の追加投資金額（円）
 }
 
 interface SimulationSnapshot {
@@ -116,8 +119,8 @@ interface SimulationResult {
 
 金額入力方法に応じて各商品の年間投資額を算出:
 
-- **商品毎（6-1）**: 各商品の月額 × 12
-- **総額（6-2）**:
+- **商品毎**: 各商品の月額 × 12
+- **総額**:
   - 口数比率モード: `money_i = totalYearly × (ratio_i × price_i) / Σ(ratio_j × price_j)`（価格加重按分、各年の商品価格を考慮）
   - 資産比率モード: `money_i = totalYearly × ratio_i / Σ(ratio_j)`（単純按分）
   - `totalYearly = 月額 × 12 + スポット`
