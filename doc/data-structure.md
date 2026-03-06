@@ -8,11 +8,21 @@ interface Product {
   name: string
   currentPrice: number           // 現在の価格（1口1円時: 円/口、1口1万円時: 円/万口）
   expectedGrowthRate: number     // 期待成長率（%/年、例: 3 = 3%）
-  monthlyAmount?: number        // 積立する場合の月々の金額（円）
-  targetRatio?: number          // 目標口数比率（%）
+  monthlyAmount?: number        // 商品毎モード時の月々の積立金額（円）
+  targetRatio?: number          // 目標比率（%）（口数比率 or 資産比率）
   currentUnits?: number         // 現在の保有口数
   currentValuation?: number     // 現在の保有評価額（円）
 }
+```
+
+---
+
+## 型定義
+
+```typescript
+type PriceUnitMode = "yen" | "man"           // 価格単位（1口1円 or 1口1万円）
+type RatioMode = "units" | "asset"           // 比率モード（口数比率 or 資産比率）
+type InvestmentInputMode = "perProduct" | "total"  // 金額入力方法（商品毎 or 総額）
 ```
 
 ---
@@ -23,9 +33,13 @@ interface Product {
 interface SimulationInput {
   targetAmount: number           // 目標資産額（円、入力は万円単位）
   targetYears: number            // 目標達成年数
-  additionalInvestmentYears: number[]  // 追加投資する年（0〜targetYears、最大4つ）
+  additionalInvestmentYears: number[]  // 追加投資する年（0〜targetYears、最大4つ、任意）
   hasRegularInvestment: boolean  // 積立投資するか
-  priceUnitMode: "yen" | "man"   // 価格単位（1口1円 or 1口1万円）
+  priceUnitMode: PriceUnitMode   // 価格単位
+  ratioMode?: RatioMode          // 比率モード（デフォルト "units"）
+  investmentInputMode?: InvestmentInputMode  // 金額入力方法（デフォルト "perProduct"）
+  totalMonthlyAmount?: number    // 総額モード時の月額（円/月）
+  totalSpotAmount?: number       // 総額モード時のスポット（円/年、任意）
   products: Product[]
 }
 ```
@@ -83,8 +97,10 @@ interface SimulationResult {
 
 ### 目標の商品別配分
 
-- 目標達成年時点で口数が目標口数比率になるよう追加投資を算出
-- targetUnits_i = targetAmount × (ratio_i) / Σ(ratio_j × price_j)
+比率モードに応じて目標口数を算出:
+
+- **口数比率（6-1）**: `targetUnits_i = targetAmount × ratio_i / Σ(ratio_j × price_j)`
+- **資産比率（6-2）**: `targetUnits_i = (targetAmount × ratio_i) / price_i`
 
 ### 現在保有の換算
 
@@ -96,14 +112,21 @@ interface SimulationResult {
 
 - 価格(t) = 現在の価格 × (1 + 成長率/100)^年数
 
-### 積立投資「する」の場合
+### 積立投資の按分
 
-- 年ごとの積立金額 ÷ その年の終了時点の価格 = 年間購入口数
+金額入力方法に応じて各商品の年間投資額を算出:
+
+- **商品毎（6-1）**: 各商品の月額 × 12
+- **総額（6-2）**:
+  - 口数比率モード: `money_i = totalYearly × (ratio_i × price_i) / Σ(ratio_j × price_j)`（価格加重按分、各年の商品価格を考慮）
+  - 資産比率モード: `money_i = totalYearly × ratio_i / Σ(ratio_j)`（単純按分）
+  - `totalYearly = 月額 × 12 + スポット`
 
 ### 追加投資
 
-- 目標口数比率を満たす口数に不足分を、指定年に一括投資
+- 目標比率を満たす口数に不足分を、指定年に一括投資
 - 追加投資年を複数指定した場合、各シナリオの結果を比較可能
+- スポット（総額モードの年額追加投資）とは別物
 
 ---
 
